@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Codeblocks • Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#070a19; --panel:#10152f; --muted:#8a8fae; --text:#e7e9f7;
+    --line:rgba(255,255,255,.08); --brand:#7355ff; --brand2:#a18bff; --danger:#d84557;
+    --radius:14px; --shadow:0 12px 30px rgba(0,0,0,.35); --t:.2s cubic-bezier(.2,.7,.2,1);
+  }
+  *{box-sizing:border-box} body{margin:0;background:radial-gradient(1200px 700px at 20% 120%, #0e1430 0%, #070a19 55%);color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
+  header{position:sticky;top:0;z-index:5;display:flex;gap:12px;align-items:center;justify-content:space-between;padding:14px 16px;background:rgba(7,10,25,.8);backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
+  .logo{font-weight:800;letter-spacing:.02em}
+  .pill{background:linear-gradient(90deg,var(--brand),var(--brand2));border:0;color:#fff;border-radius:999px;padding:10px 16px;font-weight:800;cursor:pointer;box-shadow:0 8px 24px rgba(115,85,255,.35)}
+  .ghost{background:transparent;border:1px solid var(--line)}
+  main{max-width:1200px;margin:18px auto;padding:0 16px}
+  .cards{display:grid;grid-template-columns:1fr;gap:14px}
+  .card{background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.02));border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
+  h2{margin:0 0 6px} .muted{color:var(--muted)}
+
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:6px 0 12px}
+  .input,.select{background:#0f1430;border:1px solid #2a2e43;color:#fff;border-radius:10px;padding:10px 12px}
+  .select{padding-right:30px}
+  .table{width:100%;border-collapse:separate;border-spacing:0 8px}
+  .table thead th{font-size:.9rem;color:var(--muted);text-align:left;padding:0 8px}
+  .row{background:#121739;border:1px solid var(--line);border-radius:12px}
+  .row td{padding:10px 8px;vertical-align:middle}
+  .role{min-width:150px}
+  .teacher{min-width:220px}
+  .actions{display:flex;gap:8px}
+  .btn{border:0;border-radius:10px;padding:8px 12px;font-weight:700;cursor:pointer;transition:transform var(--t)}
+  .btn:hover{transform:translateY(-1px)}
+  .save{background:linear-gradient(90deg,var(--brand),var(--brand2));color:#fff}
+  .danger{background:var(--danger);color:#fff}
+  .thin{font-size:.9rem;color:var(--muted)}
+  .tag{display:inline-block;padding:4px 8px;border-radius:999px;background:rgba(255,255,255,.08);font-size:.75rem}
+  .flex{display:flex;gap:10px;align-items:center}
+  .right{margin-left:auto}
+
+  .tabs{display:flex;gap:8px;margin-bottom:12px}
+  .tab{border:1px solid var(--line);background:transparent;color:#fff;border-radius:999px;padding:8px 14px;cursor:pointer}
+  .tab.active{background:linear-gradient(90deg,var(--brand),var(--brand2))}
+  .hidden{display:none}
+  .notice{padding:10px 12px;border:1px dashed var(--line);border-radius:10px;background:rgba(255,255,255,.03);margin:8px 0}
+</style>
+</head>
+<body>
+  <header>
+    <div class="flex">
+      <div class="logo">CODEBLOCKS • Admin</div>
+      <div class="tag" id="meRole">…</div>
+    </div>
+    <div class="flex">
+      <button id="toDashboard" class="tab">Naar dashboards</button>
+      <button id="logout" class="pill ghost">Uitloggen</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="tabs">
+      <button class="tab active" data-tab="users">Gebruikers</button>
+      <button class="tab" data-tab="sites">Sites</button>
+      <button class="tab" data-tab="settings">Instellingen</button>
+    </div>
+
+    <!-- Users -->
+    <section id="tab-users">
+      <div class="card">
+        <h2>Gebruikersbeheer</h2>
+        <p class="muted">Zoek, filter, wijzig rollen en koppel leerlingen aan een docent.</p>
+
+        <div class="toolbar">
+          <input id="q" class="input" placeholder="Zoeken op naam of e-mail…" />
+          <select id="filterRole" class="select">
+            <option value="">Alle rollen</option>
+            <option>leerling</option>
+            <option>docent</option>
+            <option>admin</option>
+            <option>schoolblocks</option>
+            <option>superadmin</option>
+            <option>user</option>
+          </select>
+          <button id="refresh" class="tab">Verversen</button>
+          <span class="thin" id="count">0 resultaten</span>
+          <span class="right thin" id="pageInfo"></span>
+        </div>
+
+        <div class="notice">Tip: nieuwe accounts krijgen automatisch een rol op basis van het e-maildomein (via onCreate). Rollen kun je hierna aanpassen.</div>
+
+        <table class="table" id="tbl">
+          <thead>
+            <tr>
+              <th>Naam</th>
+              <th>E-mail</th>
+              <th>Rol</th>
+              <th>Docent (bij leerling)</th>
+              <th>Acties</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+
+        <div class="toolbar">
+          <button id="prev" class="tab">◀ Vorige</button>
+          <button id="next" class="tab">Volgende ▶</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sites (placeholder: later invullen) -->
+    <section id="tab-sites" class="hidden">
+      <div class="card">
+        <h2>Sites (schoolbreed)</h2>
+        <p class="muted">Hier komt een overzicht met filters en acties (unpublish/verwijderen/feature). Eerst rollen afronden.</p>
+      </div>
+    </section>
+
+    <!-- Settings (placeholder) -->
+    <section id="tab-settings" class="hidden">
+      <div class="card">
+        <h2>Instellingen</h2>
+        <div class="notice">Hier kun je later quota’s en policies instellen (max sites per leerling, publicatiebeleid, enz.).</div>
+      </div>
+    </section>
+  </main>
+
+<script type="module">
+  // Firebase
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+  import {
+    getFirestore, collection, query, orderBy, limit, startAfter, getDocs, doc, getDoc
+  } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+  import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-functions.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCvZo6380Nxq_YUO3uXXaPkpGFW5xFaEiE",
+    authDomain: "weblab-e90e6.firebaseapp.com",
+    projectId: "weblab-e90e6",
+    storageBucket: "weblab-e90e6.appspot.com",
+    messagingSenderId: "871374138646",
+    appId: "1:871374138646:web:d0632e471c582e5bff7437"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const functions = getFunctions(app, "europe-west1");
+
+  // Callables
+  const setUserRole = httpsCallable(functions, "setUserRole");
+  let resetStudent; // optioneel
+  try { resetStudent = httpsCallable(functions, "resetStudent"); } catch(_) {}
+
+  // UI helpers
+  const $ = s => document.querySelector(s);
+  const $$ = s => document.querySelectorAll(s);
+  const tbody = $("#tbody");
+  const countEl = $("#count");
+  const pageInfo = $("#pageInfo");
+  const filterRole = $("#filterRole");
+  const q = $("#q");
+
+  // Tabs
+  $$(".tab").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      if(!btn.dataset.tab) return;
+      $$(".tab").forEach(x=>x.classList.remove("active"));
+      btn.classList.add("active");
+      ["users","sites","settings"].forEach(id=>{
+        $("#tab-"+id).classList.toggle("hidden", id!==btn.dataset.tab);
+      });
+    });
+  });
+
+  // Auth guard
+  onAuthStateChanged(auth, async (user)=>{
+    if(!user){ location.href = "index.html"; return; }
+    const me = (await getDoc(doc(db,"users",user.uid))).data();
+    $("#meRole").textContent = me?.role || "…";
+    if (!["admin","superadmin"].includes(me?.role)) {
+      // Geen admin? Routeer naar eigen dashboard
+      location.href = "dashboard.html";
+      return;
+    }
+    init();
+  });
+
+  $("#logout").onclick = ()=>signOut(auth);
+  $("#toDashboard").onclick = ()=>location.href="dashboard.html";
+
+  // Paginatie state
+  const PAGE = 25;
+  let lastDoc = null;
+  let page = 1;
+  $("#prev").disabled = true;
+
+  async function init(){
+    await loadTeachersCache();
+    await loadUsers(true);
+    $("#refresh").onclick = ()=>loadUsers(true);
+    $("#next").onclick = ()=>loadUsers(false, true);
+    $("#prev").onclick = ()=>loadUsers(false, false, true);
+    q.addEventListener("input", applyFilter);
+    filterRole.addEventListener("change", applyFilter);
+  }
+
+  // Cache van docenten (voor teacherId keuzelijst)
+  let TEACHERS = [];
+  async function loadTeachersCache(){
+    // simpele fetch: neem eerste 200 docenten op createdAt desc
+    const qs = query(collection(db,"users"), orderBy("createdAt","desc"));
+    const snap = await getDocs(qs);
+    TEACHERS = snap.docs.map(d=>({id:d.id, ...d.data()})).filter(u=>u.role==="docent");
+  }
+  function teacherSelectHtml(current){
+    const options = ['<option value="">— kies docent —</option>']
+      .concat(TEACHERS.map(t=>`<option value="${t.id}" ${current===t.id?'selected':''}>${(t.name||'(naamloos)')} — ${t.email||''}</option>`));
+    return `<select class="select teacherSel">${options.join("")}</select>`;
+  }
+
+  // Users laden
+  let CUR_DATA = []; // voor clientside filter
+  let PAGE_STACK = []; // voor terug
+
+  async function loadUsers(reset=false, forward=false, backward=false){
+    tbody.innerHTML = `<tr><td colspan="5" class="thin">Laden…</td></tr>`;
+
+    let qs = query(collection(db,"users"), orderBy("createdAt","desc"), limit(PAGE));
+    if (forward && lastDoc) qs = query(collection(db,"users"), orderBy("createdAt","desc"), startAfter(lastDoc), limit(PAGE));
+    if (backward && PAGE_STACK.length >= 2){
+      // Ga één pagina terug door de stack opnieuw op te bouwen
+      PAGE_STACK.pop(); // drop current
+      const anchor = PAGE_STACK[PAGE_STACK.length-1];
+      qs = query(collection(db,"users"), orderBy("createdAt","desc"), startAfter(anchor), limit(PAGE));
+      page = Math.max(1, page-1);
+    }else if (reset){
+      PAGE_STACK = [];
+      page = 1;
+    }else if (forward){
+      page++;
+    }
+
+    const snap = await getDocs(qs);
+    const docs = snap.docs.map(d=>({id:d.id, ...d.data()}));
+
+    if (docs.length){
+      lastDoc = snap.docs[snap.docs.length-1];
+      PAGE_STACK.push(lastDoc);
+    }
+
+    CUR_DATA = docs;
+    render(docs);
+    pageInfo.textContent = `Pagina ${page}`;
+    $("#prev").disabled = page<=1;
+    $("#next").disabled = docs.length<PAGE;
+  }
+
+  function render(rows){
+    if (!rows.length){
+      tbody.innerHTML = `<tr><td colspan="5" class="thin">Geen gebruikers gevonden.</td></tr>`;
+      countEl.textContent = "0 resultaten";
+      return;
+    }
+    tbody.innerHTML = "";
+    rows.forEach(u=>{
+      const tr = document.createElement("tr");
+      tr.className = "row";
+      tr.innerHTML = `
+        <td>
+          <div style="font-weight:800">${escapeHtml(u.name || "(naamloos)")}</div>
+          <div class="thin">${u.organization || ""}</div>
+        </td>
+        <td>${escapeHtml(u.email || "")}</td>
+        <td class="role">
+          <select class="select roleSel">
+            ${["leerling","docent","admin","schoolblocks","superadmin","user"].map(r=>`<option ${u.role===r?"selected":""}>${r}</option>`).join("")}
+          </select>
+        </td>
+        <td class="teacher">
+          ${u.role==="leerling" ? teacherSelectHtml(u.teacherId) : `<span class="thin">—</span>`}
+        </td>
+        <td class="actions">
+          <button class="btn save">Opslaan</button>
+          <button class="btn danger resetBtn" title="Wachtwoord reset naar 'codeblocks'">Reset WW</button>
+        </td>
+      `;
+      const roleSel = tr.querySelector(".roleSel");
+      const teacherCell = tr.querySelector(".teacher");
+      roleSel.addEventListener("change", ()=>{
+        if (roleSel.value === "leerling"){
+          teacherCell.innerHTML = teacherSelectHtml(u.teacherId);
+        } else {
+          teacherCell.innerHTML = `<span class="thin">—</span>`;
+        }
+      });
+      tr.querySelector(".save").addEventListener("click", ()=>saveUser(u, tr));
+      tr.querySelector(".resetBtn").addEventListener("click", ()=>resetPw(u));
+      tbody.appendChild(tr);
+    });
+    countEl.textContent = `${rows.length} resultaten`;
+  }
+
+  async function saveUser(u, tr){
+    const role = tr.querySelector(".roleSel").value;
+    const teacherId = tr.querySelector(".teacherSel")?.value || null;
+    try{
+      // Alleen admin/superadmin mag dit (server checkt ook)
+      const res = await setUserRole({ targetUid: u.id, role, teacherId });
+      toast("Opgeslagen.");
+    }catch(e){
+      alert("Kon rol niet opslaan: " + (e.message || e.code));
+    }
+  }
+
+  async function resetPw(u){
+    if (!resetStudent){
+      alert("resetStudent() callable niet gevonden. Deploy eerst de functie 'resetStudent' in Firebase.");
+      return;
+    }
+    if (u.role !== "leerling"){
+      if (!confirm("Dit is geen leerling. Toch wachtwoord resetten naar 'codeblocks'?")) return;
+    }
+    try{
+      await resetStudent({ studentUid: u.id });
+      toast("Wachtwoord gereset.");
+    }catch(e){
+      alert("Kon wachtwoord niet resetten: " + (e.message || e.code));
+    }
+  }
+
+  // Filter/search (client-side op huidige pagina)
+  function applyFilter(){
+    const term = q.value.trim().toLowerCase();
+    const r = filterRole.value;
+    const rows = CUR_DATA.filter(u=>{
+      const matchText = [u.name,u.email,u.organization].filter(Boolean).join(" ").toLowerCase().includes(term);
+      const matchRole = !r || u.role===r;
+      return matchText && matchRole;
+    });
+    render(rows);
+  }
+
+  function toast(msg){
+    const n = document.createElement("div");
+    n.textContent = msg;
+    n.style.position = "fixed"; n.style.bottom = "18px"; n.style.left = "50%"; n.style.transform = "translateX(-50%)";
+    n.style.background = "rgba(255,255,255,.1)"; n.style.border = "1px solid var(--line)"; n.style.padding = "10px 14px";
+    n.style.borderRadius = "10px"; n.style.backdropFilter = "blur(6px)"; n.style.boxShadow = "var(--shadow)";
+    document.body.appendChild(n);
+    setTimeout(()=>n.remove(), 1600);
+  }
+  function escapeHtml(s){ return String(s||"").replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;" }[m])); }
+</script>
+</body>
+</html>
