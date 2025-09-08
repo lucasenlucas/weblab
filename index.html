@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Codeblocks • Login/Registratie</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --clr-bg:#070a19;
+      --clr-bg-accent:#10152f;
+      --clr-primary:#7355ff;
+      --clr-primary-2:#a18bff;
+      --clr-text:#e7e9f7;
+      --clr-muted:#8a8fae;
+      --radius:16px;
+      --t:260ms cubic-bezier(.2,.7,.2,1);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{
+      font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;
+      background:radial-gradient(1200px 700px at 20% 120%, #0e1430 0%, #070a19 55%);
+      color:var(--clr-text); min-height:100svh; display:grid; place-items:center; overflow:hidden;
+    }
+    .glow, .glow2, .glow3{
+      position:fixed; width:70vmin; height:70vmin; border-radius:50%;
+      filter:blur(60px); opacity:.18; pointer-events:none; z-index:0; mix-blend-mode:screen;
+      transform:translateZ(0);
+    }
+    .glow{background:radial-gradient(circle, var(--clr-primary-2), transparent 60%); bottom:-20vmin; left:-10vmin; animation:float1 12s ease-in-out infinite;}
+    .glow2{background:radial-gradient(circle, #4fd1ff, transparent 60%); top:-15vmin; right:-10vmin; opacity:.12; animation:float2 14s ease-in-out infinite;}
+    .glow3{background:radial-gradient(circle, #ff7af6, transparent 60%); bottom:-25vmin; right:-20vmin; opacity:.12; animation:float3 16s ease-in-out infinite;}
+    @keyframes float1{0%,100%{transform:translate(0,0)}50%{transform:translate(2vmin,-2vmin)}}
+    @keyframes float2{0%,100%{transform:translate(0,0)}50%{transform:translate(-2vmin,2vmin)}}
+    @keyframes float3{0%,100%{transform:translate(0,0)}50%{transform:translate(2vmin,1vmin)}}
+
+    .grid{
+      position:fixed; inset:0; background:
+        linear-gradient(transparent 24%, rgba(255,255,255,.035) 25%, rgba(255,255,255,.035) 26%, transparent 27%) 0 0/48px 48px,
+        linear-gradient(90deg,transparent 24%, rgba(255,255,255,.035) 25%, rgba(255,255,255,.035) 26%, transparent 27%) 0 0/48px 48px;
+      opacity:.35; z-index:0; mask-image:radial-gradient(70% 70% at 50% 50%, #000 60%, transparent 100%);
+      animation:gridFloat 20s linear infinite;
+    }
+    @keyframes gridFloat{from{background-position:0 0,0 0}to{background-position:0 48px,48px 0}}
+
+    .card{
+      position:relative; z-index:1; width:min(92vw,440px);
+      background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.02));
+      border:1px solid rgba(255,255,255,.08); border-radius:var(--radius); padding:28px 26px 22px;
+      box-shadow:0 20px 60px rgba(0,0,0,.45);
+      transform:translateY(18px) scale(.98); opacity:0; animation:cardIn .7s var(--t) forwards;
+    }
+    @keyframes cardIn{to{transform:translateY(0) scale(1); opacity:1}}
+
+    .logo{display:block; width:140px; margin:2px auto 10px auto}
+    h2{font-size:1.55rem; text-align:center; font-weight:700;
+      background:linear-gradient(90deg, var(--clr-primary), var(--clr-primary-2));
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    }
+    .sub{margin-top:6px; text-align:center; color:var(--clr-muted); font-size:.95rem}
+
+    .err{min-height:1.25em; margin:.4rem 0; text-align:center; color:#ff7b7b;}
+
+    label{display:block; font-size:.9rem; color:var(--clr-muted); margin:10px 2px 6px}
+    input{
+      width:100%; background:#0f1430; border:1px solid #2a2e43; color:var(--clr-text);
+      border-radius:12px; padding:12px 12px; font-size:1rem; transition:border-color var(--t), box-shadow var(--t), transform var(--t);
+      outline:none;
+    }
+    input:focus{
+      border-color:var(--clr-primary-2);
+      box-shadow:0 0 0 6px rgba(115,85,255,.12), inset 0 1px 0 rgba(255,255,255,.05);
+      transform:translateZ(0);
+    }
+
+    .row{display:flex; gap:10px}
+    .row>*{flex:1}
+
+    .btn{
+      width:100%; border:0; border-radius:12px; padding:12px 14px; font-weight:700; cursor:pointer; position:relative; overflow:hidden;
+      transition:transform var(--t), box-shadow var(--t), filter var(--t);
+      background:linear-gradient(90deg, var(--clr-primary), var(--clr-primary-2)); color:#fff;
+      box-shadow:0 8px 24px -6px rgba(115,85,255,.5);
+    }
+    .btn:hover{transform:translateY(-1px)}
+    .btn:active{transform:translateY(0) scale(.99)}
+    .btn[disabled]{opacity:.7; cursor:not-allowed; filter:saturate(.7)}
+    .btn .shimmer{
+      content:""; position:absolute; inset:0; background:
+        linear-gradient(120deg, transparent 0%, rgba(255,255,255,.15) 18%, transparent 36%);
+      transform:translateX(-120%); animation:shimmer 2.4s ease-in-out infinite;
+      pointer-events:none;
+    }
+    .swap{margin-top:10px; text-align:center; color:var(--clr-muted)}
+    .swap .link{color:var(--clr-primary-2); cursor:pointer; text-decoration:underline}
+
+    .link-btn{
+      background:none; border:0; padding:0; cursor:pointer;
+      color:var(--clr-primary-2); text-decoration:underline; font:inherit;
+    }
+
+    .pop{animation:pop .45s var(--t)}
+    @keyframes pop{0%{transform:scale(.98); opacity:.6}70%{transform:scale(1.015)}100%{transform:scale(1); opacity:1}}
+
+    .confetti{position:fixed; inset:0; pointer-events:none; z-index:5}
+  </style>
+</head>
+<body>
+  <div class="grid"></div>
+  <div class="glow"></div><div class="glow2"></div><div class="glow3"></div>
+
+  <div class="card">
+    <img class="logo" src="https://codeblocks.nl/cdn-homepage/codeblocks_logo.png" alt="Codeblocks">
+    <h2 id="title">Inloggen bij Codeblocks</h2>
+    <p class="sub" id="subtitle">Welkom terug! Vul je gegevens in.</p>
+
+    <div id="error" class="err"></div>
+
+    <div id="registerFields" class="pop" style="display:none">
+      <label for="name">Volledige naam</label>
+      <input id="name" type="text" placeholder="Bijv. Alex de Vries">
+      <label for="org">Organisatie / School</label>
+      <input id="org" type="text" placeholder="Bijv. mijnschool">
+    </div>
+
+    <label for="email">E-mail</label>
+    <input id="email" type="email" placeholder="naam@voorbeeld.nl" autocomplete="email">
+
+    <label for="password">Wachtwoord</label>
+    <input id="password" type="password" placeholder="••••••••" autocomplete="current-password">
+
+    <!-- Wachtwoord vergeten -->
+    <div style="display:flex; justify-content:flex-end; margin-top:6px">
+      <button id="forgot" type="button" class="link-btn">Wachtwoord vergeten?</button>
+    </div>
+
+    <div style="height:10px"></div>
+    <button id="primary" class="btn">
+      <span id="primaryText">Inloggen</span>
+      <span class="shimmer"></span>
+    </button>
+
+    <p class="swap">
+      <span id="swapText">Nog geen account?</span>
+      <span class="link" id="swapLink">Registreren</span>
+    </p>
+  </div>
+
+  <canvas id="confetti" class="confetti"></canvas>
+
+  <script type="module">
+    // Firebase SDKs (v12)
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+    import {
+      getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword,
+      onAuthStateChanged, updateProfile, sendPasswordResetEmail
+    } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+    import {
+      getFirestore, doc, setDoc, getDoc, serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+
+    // --- JOUW Firebase project (weblab-e90e6) ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyCvZo6380Nxq_YUO3uXXaPkpGFW5xFaEiE",
+      authDomain: "weblab-e90e6.firebaseapp.com",
+      projectId: "weblab-e90e6",
+      storageBucket: "weblab-e90e6.appspot.com",
+      messagingSenderId: "871374138646",
+      appId: "1:871374138646:web:d0632e471c582e5bff7437"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
+    auth.languageCode = 'nl';
+
+    // --- UI refs
+    const title = document.getElementById("title");
+    const subtitle = document.getElementById("subtitle");
+    const errorDiv = document.getElementById("error");
+    const primaryBtn = document.getElementById("primary");
+    const primaryText = document.getElementById("primaryText");
+    const swapText = document.getElementById("swapText");
+    const swapLink = document.getElementById("swapLink");
+    const regBox = document.getElementById("registerFields");
+    const emailEl = document.getElementById("email");
+    const passEl = document.getElementById("password");
+    const nameEl = document.getElementById("name");
+    const orgEl = document.getElementById("org");
+    const forgotBtn = document.getElementById("forgot");
+
+    let mode = "login"; // of "register"
+
+    swapLink.addEventListener("click", () => {
+      mode = mode === "login" ? "register" : "login";
+      applyMode();
+    });
+
+    function applyMode(){
+      errorDiv.textContent = "";
+      errorDiv.style.color = "#ff7b7b";
+      if(mode === "login"){
+        title.textContent = "Inloggen bij Codeblocks";
+        subtitle.textContent = "Welkom terug! Vul je gegevens in.";
+        primaryText.textContent = "Inloggen";
+        swapText.textContent = "Nog geen account?";
+        swapLink.textContent = "Registreren";
+        regBox.style.display = "none";
+        forgotBtn.style.display = "inline";
+      }else{
+        title.textContent = "Account aanmaken";
+        subtitle.textContent = "Vul je gegevens in om te starten.";
+        primaryText.textContent = "Registreren";
+        swapText.textContent = "Al een account?";
+        swapLink.textContent = "Inloggen";
+        regBox.style.display = "block";
+        forgotBtn.style.display = "none";
+      }
+      document.querySelector(".card").classList.add("pop");
+      setTimeout(()=>document.querySelector(".card").classList.remove("pop"), 450);
+    }
+    applyMode();
+
+    function setLoading(on){
+      primaryBtn.disabled = on;
+      primaryText.textContent = on ? (mode==="login"?"Inloggen…":"Registreren…") : (mode==="login"?"Inloggen":"Registreren");
+    }
+
+    function flashMessage(msg, ok=false){
+      errorDiv.textContent = msg;
+      errorDiv.style.color = ok ? "#6BEE8A" : "#ff7b7b";
+      errorDiv.classList.add("pop");
+      setTimeout(()=>errorDiv.classList.remove("pop"), 450);
+    }
+
+    function mapAuthError(code){
+      return ({
+        "auth/invalid-email":"Geen geldige e-mail.",
+        "auth/missing-password":"Voer een wachtwoord in.",
+        "auth/wrong-password":"Onjuist wachtwoord.",
+        "auth/user-not-found":"Geen account gevonden met dit e-mailadres.",
+        "auth/email-already-in-use":"Dit e-mailadres is al in gebruik.",
+        "auth/weak-password":"Gebruik een sterker wachtwoord (min. 6 tekens).",
+        "auth/network-request-failed":"Netwerkfout. Probeer opnieuw."
+      })[code] || "Er is iets misgegaan. Probeer het opnieuw.";
+    }
+
+    // Maak/merge Firestore user doc (hier zetten we STRAKS de rollen in)
+    async function ensureUserDoc(user, extra={}){
+      const ref = doc(db, "users", user.uid);
+      const snap = await getDoc(ref);
+      if(!snap.exists()){
+        const payload = {
+          name: user.displayName || extra.name || "",
+          organization: extra.organization || "",
+          role: "user",                // ⇦ volgende stap vervangen door echte rollen
+          email: user.email || "",
+          createdAt: serverTimestamp(),
+        };
+        await setDoc(ref, payload, { merge:true });
+        celebrate();
+      }
+    }
+
+    async function doLogin(email, pass){
+      const cred = await signInWithEmailAndPassword(auth, email, pass);
+      await ensureUserDoc(cred.user);
+    }
+
+    async function doRegister(name, org, email, pass){
+      const cred = await createUserWithEmailAndPassword(auth, email, pass);
+      if(name) await updateProfile(cred.user, { displayName:name });
+      await ensureUserDoc(cred.user, { name, organization:org });
+    }
+
+    // Primary action
+    document.getElementById("primary").addEventListener("click", async () => {
+      setLoading(true);
+      flashMessage(""); // clear
+      const email = emailEl.value.trim();
+      const pass = passEl.value;
+      try{
+        if(mode==="login"){
+          await doLogin(email, pass);
+        }else{
+          const name = (nameEl?.value || "").trim();
+          const org = (orgEl?.value || "").trim();
+          await doRegister(name, org, email, pass);
+        }
+        // redirect na login
+        window.location.href = "dashboard.html";
+      }catch(e){
+        flashMessage(mapAuthError(e.code));
+      }finally{
+        setLoading(false);
+      }
+    });
+
+    // Enter-to-submit
+    [emailEl, passEl].forEach(el => el.addEventListener("keydown", e=>{
+      if(e.key==="Enter") document.getElementById("primary").click();
+    }));
+
+    // Wachtwoord reset
+    forgotBtn.addEventListener("click", async ()=>{
+      if(mode !== "login") return;
+      const email = emailEl.value.trim();
+      if(!email){
+        flashMessage("Vul eerst je e-mailadres in om een resetlink te ontvangen.");
+        emailEl.focus();
+        return;
+      }
+      try{
+        forgotBtn.disabled = true;
+        await sendPasswordResetEmail(auth, email);
+        flashMessage("Resetlink verzonden! Check je mail (en spam).", true);
+      }catch(e){
+        const map = {
+          "auth/invalid-email":"Geen geldige e-mail.",
+          "auth/user-not-found":"Geen account gevonden met dit e-mailadres.",
+          "auth/network-request-failed":"Netwerkfout. Probeer opnieuw."
+        };
+        flashMessage(map[e.code] || "Kon geen resetlink sturen. Probeer later opnieuw.");
+      }finally{
+        forgotBtn.disabled = false;
+      }
+    });
+
+    onAuthStateChanged(auth, (user) => {
+      if(user){ /* al ingelogd → je kunt hier eventueel auto-redirecten */ }
+    });
+
+    // Kleine confetti bij eerste account-aanmaak
+    function celebrate(){
+      const c = document.getElementById("confetti");
+      const ctx = c.getContext("2d");
+      const dpr = Math.max(1, window.devicePixelRatio || 1);
+      function resize(){ c.width = innerWidth*dpr; c.height = innerHeight*dpr; }
+      resize(); let parts = Array.from({length:80}, () => ({
+        x: Math.random()*c.width, y: -Math.random()*c.height*.2,
+        r: 3 + Math.random()*3, vy: 1 + Math.random()*3, vx: (Math.random()-.5)*1.2,
+        a: Math.random()*Math.PI*2
+      }));
+      let t=0; const id = setInterval(()=>{
+        ctx.clearRect(0,0,c.width,c.height);
+        parts.forEach(p=>{
+          p.y += p.vy; p.x += p.vx; p.a += .1;
+          ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.a);
+          ctx.fillStyle = ["#7355ff","#a18bff","#4fd1ff","#ff7af6"][p.r|0 % 4];
+          ctx.fillRect(-p.r,-p.r, p.r*2, p.r*2);
+          ctx.restore();
+        });
+        parts = parts.filter(p=>p.y < c.height+20);
+        if(++t>120) { clearInterval(id); ctx.clearRect(0,0,c.width,c.height); }
+      }, 16);
+      window.addEventListener("resize", resize, { once:true });
+    }
+  </script>
+
+  <script>
+    // Cosmetische floating dots
+    const DOTS = 22;
+    for(let i=0;i<DOTS;i++){
+      const d = document.createElement('div');
+      d.style.position='fixed'; d.style.borderRadius='50%';
+      d.style.background='rgba(255,255,255,.05)'; d.style.backdropFilter='blur(2px)';
+      const s = 8 + Math.random()*18; d.style.width=s+'px'; d.style.height=s+'px';
+      d.style.left=Math.random()*100+'%'; d.style.top=Math.random()*100+'%';
+      d.style.zIndex=0;
+      const dur = 6 + Math.random()*10;
+      d.animate([{transform:'translateY(0) rotate(0)'},{transform:'translateY(-16px) rotate(360deg)'}],
+        {duration:dur*1000, direction:'alternate', iterations:Infinity, easing:'ease-in-out'});
+      document.body.appendChild(d);
+    }
+  </script>
+</body>
+</html>
